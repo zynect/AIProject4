@@ -149,21 +149,25 @@ class ExactInference(InferenceModule):
         pacmanPosition = gameState.getPacmanPosition()
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
-
         # Replace this code with a correct observation update
         # Be sure to handle the "jail" edge case where the ghost is eaten
         # and noisyDistance is None
-        allPossible = util.Counter()
-        for p in self.legalPositions:
-            trueDistance = util.manhattanDistance(p, pacmanPosition)
-            if emissionModel[trueDistance] > 0:
-                allPossible[p] = 1.0
+        if noisyDistance == None:
+            for p in self.legalPositions: self.beliefs[p] = 0
+            self.beliefs[self.getJailPosition()] = 1
+            #print("Jail: " + str(self.getJailPosition()))
+            #assert(False)
+        else:
+            for legalp in self.legalPositions:
+                trueDistance = util.manhattanDistance(legalp, pacmanPosition)
+                if emissionModel[trueDistance] >= 0:
+                    self.beliefs[legalp] *= emissionModel[trueDistance]
+                else:
+                    print("EmMod[]: " + str(emissionModel[trueDistance]))
+                    assert(False)
+        self.beliefs.normalize()
 
         "*** END YOUR CODE HERE ***"
-
-        allPossible.normalize()
-        self.beliefs = allPossible
 
     def elapseTime(self, gameState):
         """
@@ -219,7 +223,7 @@ class ExactInference(InferenceModule):
         positions after a time update from a particular position.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        
 
     def getBeliefDistribution(self):
         return self.beliefs
@@ -236,6 +240,8 @@ class ParticleFilter(InferenceModule):
     def __init__(self, ghostAgent, numParticles=300):
         InferenceModule.__init__(self, ghostAgent);
         self.setNumParticles(numParticles)
+        #added code here
+        self.particles = []
 
     def setNumParticles(self, numParticles):
         self.numParticles = numParticles
@@ -254,6 +260,15 @@ class ParticleFilter(InferenceModule):
         weight with each position) is incorrect and may produce errors.
         """
         "*** YOUR CODE HERE ***"
+        minParticles = self.numParticles // len(self.legalPositions)
+        leftoverParticles = self.numParticles % len(self.legalPositions)
+        for legalp in self.legalPositions:
+            for x in range(0,minParticles):
+                self.particles.append(legalp)
+            if leftoverParticles > 0:
+                leftoverParticles -= 1
+                self.particles.append(legalp)
+
 
     def observe(self, observation, gameState):
         """
@@ -286,7 +301,30 @@ class ParticleFilter(InferenceModule):
         emissionModel = busters.getObservationDistribution(noisyDistance)
         pacmanPosition = gameState.getPacmanPosition()
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        if noisyDistance == None:
+            for p in self.legalPositions: self.beliefs[p] = 0
+            self.beliefs[self.getJailPosition()] = 1
+            for particle in self.particles:
+                particle = self.getJailPosition()
+
+        particleWeights = util.Counter()
+        for particle in self.particles:
+            trueDistance = util.manhattanDistance(particle, pacmanPosition)
+            if emissionModel[trueDistance] >= 0:
+                particleWeights[particle] += emissionModel[trueDistance]
+            else:
+                assert(False)
+        particleWeights.normalize()
+
+        for particle in self.particles:
+            particle = util.sample(particleWeights)
+
+        #wipe beliefs and reset based on updated particles
+        self.beliefs = util.Counter()
+        for particle in self.particles:
+            self.beliefs[particle] += 1
+        self.beliefs.normalize()
+
 
     def elapseTime(self, gameState):
         """
@@ -313,7 +351,11 @@ class ParticleFilter(InferenceModule):
         Counter object)
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        bdCounter = util.Counter()
+        for particle in self.particles:
+            bdCounter[particle] += 1
+        bdCounter.normalize()
+        return bdCounter
 
 class MarginalInference(InferenceModule):
     """
