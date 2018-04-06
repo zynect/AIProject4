@@ -4,7 +4,7 @@
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -223,7 +223,7 @@ class ExactInference(InferenceModule):
         positions after a time update from a particular position.
         """
         "*** YOUR CODE HERE ***"
-        
+
 
     def getBeliefDistribution(self):
         return self.beliefs
@@ -315,9 +315,10 @@ class ParticleFilter(InferenceModule):
             else:
                 assert(False)
         particleWeights.normalize()
+        print(particleWeights)
+        for x in range(len(self.particles)):
+            self.particles[x] = util.sample(particleWeights)
 
-        for particle in self.particles:
-            particle = util.sample(particleWeights)
 
         #wipe beliefs and reset based on updated particles
         self.beliefs = util.Counter()
@@ -567,4 +568,3 @@ def setGhostPositions(gameState, ghostPositions):
         conf = game.Configuration(pos, game.Directions.STOP)
         gameState.data.agentStates[index + 1] = game.AgentState(conf, False)
     return gameState
-
