@@ -223,7 +223,14 @@ class ExactInference(InferenceModule):
         positions after a time update from a particular position.
         """
         "*** YOUR CODE HERE ***"
-
+        pacmanPosition = gameState.getPacmanPosition()
+        futureb = util.Counter()
+        for legalp in self.legalPositions:
+                newPosDist = self.getPositionDistribution(self.setGhostPosition(gameState, legalp))
+                for newPos, prob in newPosDist.items():
+                    futureb[newPos] += (prob * self.beliefs[legalp])
+        futureb.normalize()
+        self.beliefs = futureb
 
     def getBeliefDistribution(self):
         return self.beliefs
@@ -301,23 +308,24 @@ class ParticleFilter(InferenceModule):
         emissionModel = busters.getObservationDistribution(noisyDistance)
         pacmanPosition = gameState.getPacmanPosition()
         "*** YOUR CODE HERE ***"
+
         if noisyDistance == None:
             for p in self.legalPositions: self.beliefs[p] = 0
             self.beliefs[self.getJailPosition()] = 1
             for particle in self.particles:
                 particle = self.getJailPosition()
-
-        particleWeights = util.Counter()
-        for particle in self.particles:
-            trueDistance = util.manhattanDistance(particle, pacmanPosition)
-            if emissionModel[trueDistance] >= 0:
-                particleWeights[particle] += emissionModel[trueDistance]
-            else:
-                assert(False)
-        particleWeights.normalize()
-        print(particleWeights)
-        for x in range(len(self.particles)):
-            self.particles[x] = util.sample(particleWeights)
+        else:
+            particleWeights = util.Counter()
+            for particle in self.particles:
+                trueDistance = util.manhattanDistance(particle, pacmanPosition)
+                if emissionModel[trueDistance] >= 0:
+                    particleWeights[particle] += emissionModel[trueDistance]
+                else:
+                    assert(False)
+            particleWeights.normalize()
+            print(particleWeights)
+            for x in range(len(self.particles)):
+                self.particles[x] = util.sample(particleWeights)
 
 
         #wipe beliefs and reset based on updated particles
