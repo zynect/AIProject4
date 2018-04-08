@@ -223,7 +223,14 @@ class ExactInference(InferenceModule):
         positions after a time update from a particular position.
         """
         "*** YOUR CODE HERE ***"
-
+        pacmanPosition = gameState.getPacmanPosition()
+        futureb = util.Counter()
+        for legalp in self.legalPositions:
+                newPosDist = self.getPositionDistribution(self.setGhostPosition(gameState, legalp))
+                for newPos, prob in newPosDist.items():
+                    futureb[newPos] += (prob * self.beliefs[legalp])
+        futureb.normalize()
+        self.beliefs = futureb
 
     def getBeliefDistribution(self):
         return self.beliefs
@@ -303,7 +310,8 @@ class ParticleFilter(InferenceModule):
         "*** YOUR CODE HERE ***"
         #if pacman just ate a ghost
         if noisyDistance == None:
-            for p in self.legalPositions: self.beliefs[p] = 0
+            for p in self.legalPositions: 
+                self.beliefs[p] = 0
             self.beliefs[self.getJailPosition()] = 1
             for x in range(len(self.particles)):
                 self.particles[x] = self.getJailPosition()
@@ -352,7 +360,29 @@ class ParticleFilter(InferenceModule):
         a belief distribution.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        pacmanPosition = gameState.getPacmanPosition()
+        futureb = util.Counter()
+
+        particleWeights = util.Counter()
+        for particle in self.particles:
+            particleWeights[particle] += 1
+        particleWeights.normalize()
+
+        for x in range(0,2):
+            for legalp in self.legalPositions:
+                    newPosDist = self.getPositionDistribution(self.setGhostPosition(gameState, legalp))
+                    for newPos, prob in newPosDist.items():
+                        futureb[newPos] += (prob * particleWeights[legalp])
+            futureb.normalize()
+            if futureb.totalCount() == 0:
+                self.initializeUniformly(gameState)
+            else:
+                break
+
+        particleWeights = futureb
+
+        for x in range(len(self.particles)):
+            self.particles[x] = util.sample(particleWeights)
 
     def getBeliefDistribution(self):
         """
