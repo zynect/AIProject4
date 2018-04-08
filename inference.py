@@ -310,7 +310,7 @@ class ParticleFilter(InferenceModule):
         "*** YOUR CODE HERE ***"
         #if pacman just ate a ghost
         if noisyDistance == None:
-            for p in self.legalPositions: 
+            for p in self.legalPositions:
                 self.beliefs[p] = 0
             self.beliefs[self.getJailPosition()] = 1
             for x in range(len(self.particles)):
@@ -363,23 +363,24 @@ class ParticleFilter(InferenceModule):
         pacmanPosition = gameState.getPacmanPosition()
         futureb = util.Counter()
 
-        particleWeights = util.Counter()
-        for particle in self.particles:
-            particleWeights[particle] += 1
-        particleWeights.normalize()
-
+        #for loop so that it recalculates if particleWeights have a total of 0
         for x in range(0,2):
+            particleWeights = util.Counter()
+            for particle in self.particles:
+                particleWeights[particle] += 1
+            particleWeights.normalize()
+            #calculate future particle weights
             for legalp in self.legalPositions:
-                    newPosDist = self.getPositionDistribution(self.setGhostPosition(gameState, legalp))
-                    for newPos, prob in newPosDist.items():
-                        futureb[newPos] += (prob * particleWeights[legalp])
+                newPosDist = self.getPositionDistribution(self.setGhostPosition(gameState, legalp))
+                for newPos, prob in newPosDist.items():
+                    futureb[newPos] += (prob * particleWeights[legalp])
             futureb.normalize()
-            if futureb.totalCount() == 0:
+            particleWeights = futureb
+
+            if particleWeights.totalCount() == 0:
                 self.initializeUniformly(gameState)
             else:
                 break
-
-        particleWeights = futureb
 
         for x in range(len(self.particles)):
             self.particles[x] = util.sample(particleWeights)
