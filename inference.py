@@ -437,6 +437,7 @@ class JointParticleFilter:
 
     def __init__(self, numParticles=600):
         self.setNumParticles(numParticles)
+        self.particles = []
 
     def setNumParticles(self, numParticles):
         self.numParticles = numParticles
@@ -470,6 +471,14 @@ class JointParticleFilter:
         weight with each position) is incorrect and may produce errors.
         """
         "*** YOUR CODE HERE ***"
+        rawtuples = list(itertools.product(self.legalPositions, self.legalPositions))
+        random.shuffle(rawtuples)
+
+        for x in range(self.numParticles):
+            self.particles.append(rawtuples[x%len(rawtuples)])
+
+        #print(str(self.particles))
+
 
     def addGhostAgent(self, agent):
         """
@@ -517,6 +526,52 @@ class JointParticleFilter:
         emissionModels = [busters.getObservationDistribution(dist) for dist in noisyDistances]
 
         "*** YOUR CODE HERE ***"
+        #if pacman just ate a ghost
+        if noisyDistances[0] == None:
+            for p in self.legalPositions:
+                self.beliefs[p] = 0
+            self.beliefs[self.getJailPosition()] = 1
+            for x in range(len(self.particles)):
+                self.particles[x] = self.getJailPosition()
+        if noisyDistance[1] == None:
+            for p in self.legalPositions:
+                self.beliefs[p] = 0
+            self.beliefs[self.getJailPosition()] = 1
+            for x in range(len(self.particles)):
+                self.particles[x] = self.getJailPosition()
+
+
+        #otherwise recalculate the particles
+        else:
+            particleWeights = util.Counter()
+            zeroweight = True
+            #if all the particles recieve 0 weight, we recreate them
+            while zeroweight:
+                #calculate the weights for particles
+                for particle in self.particles:
+                    trueDistance = util.manhattanDistance(particle, pacmanPosition)
+                    if emissionModel[trueDistance] >= 0:
+                        particleWeights[particle] += emissionModel[trueDistance]
+                    else:
+                        assert(False)
+                particleWeights.normalize()
+                #if the particle weights are all 0, we initialize and calculate weights again
+                if(particleWeights.totalCount() == 0):
+                    self.initializeUniformly(gameState)
+                else:
+                    zeroweight = False
+            for x in range(len(self.particles)):
+                self.particles[x] = util.sample(particleWeights)
+
+
+        #wipe beliefs and reset based on updated particles
+        self.beliefs = util.Counter()
+        for particle in self.particles:
+            self.beliefs[particle] += 1
+        self.beliefs.normalize()
+
+
+
 
     def getParticleWithGhostInJail(self, particle, ghostIndex):
         """
@@ -584,7 +639,12 @@ class JointParticleFilter:
 
     def getBeliefDistribution(self):
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        beliefDist = util.Counter()
+
+        for particle in self.particles:
+            beliefDist[particle] += 1
+        beliefDist.normalize()
+        return beliefDist
 
 # One JointInference module is shared globally across instances of MarginalInference
 jointInference = JointParticleFilter()
