@@ -558,11 +558,10 @@ class JointParticleFilter:
                             assert(False)
                     #if the particle weights are all 0, we reinitialize the ghost position and calculate weights again
                     if(tempBeliefs[ghostIndex].totalCount() == 0):
-                        for ppos in range(self.numParticles):
-                            part = list(self.particles[x])
-                            for gidx in range(self.numGhosts):
-                                particle[gidx] = random.choice(self.legalPositions)
-                                self.particles[gidx] = tuple(particle)
+                        self.initializeParticles()
+                        for partind in range(self.numParticles):
+                            self.particles[partind] = self.getParticleWithGhostInJail(self.particles[partind], ghostIndex)
+
                     else:
                         break
             tempBeliefs[ghostIndex].normalize()
@@ -573,7 +572,7 @@ class JointParticleFilter:
                 if(noisyDistances[ghostIndex] == None):
                     continue
                 particle[gidx] = util.sample(tempBeliefs[gidx])
-                self.particles[gidx] = tuple(particle)
+                self.particles[x] = tuple(particle)
 
 
         #wipe beliefs and reset based on updated particles
