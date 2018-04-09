@@ -533,49 +533,54 @@ class JointParticleFilter:
         emissionModels = [busters.getObservationDistribution(dist) for dist in noisyDistances]
 
         "*** YOUR CODE HERE ***"
-        #if pacman just ate a ghost
-        if noisyDistances[0] == None:
-            for p in self.legalPositions:
-                self.beliefs[p] = 0
-            self.beliefs[self.getJailPosition()] = 1
-            for x in range(len(self.particles)):
-                self.particles[x] = self.getJailPosition()
-        if noisyDistance[1] == None:
-            for p in self.legalPositions:
-                self.beliefs[p] = 0
-            self.beliefs[self.getJailPosition()] = 1
-            for x in range(len(self.particles)):
-                self.particles[x] = self.getJailPosition()
+        tempBeliefs = []
+        for ghostIndex in range(self.numGhosts):
+            tempBeliefs.append(util.Counter())
+
+            if noisyDistances[ghostIndex] == None:
+                for position in self.legalPositions:
+                    tempBeliefs[ghostIndex][position] = 0
+                tempBeliefs[ghostIndex][self.getJailPosition(ghostIndex)] = 1
+                for particleIndex in range(len(self.particles)):
+                    self.particles[particleIndex] = self.getParticleWithGhostInJail(self.particles[particleIndex], ghostIndex)
 
 
-        #otherwise recalculate the particles
-        else:
-            particleWeights = util.Counter()
-            zeroweight = True
-            #if all the particles recieve 0 weight, we recreate them
-            while zeroweight:
-                #calculate the weights for particles
-                for particle in self.particles:
-                    trueDistance = util.manhattanDistance(particle, pacmanPosition)
-                    if emissionModel[trueDistance] >= 0:
-                        particleWeights[particle] += emissionModel[trueDistance]
+            #otherwise recalculate the particles
+            else:
+                for x in range(0,2):
+                    #calculate the weights for particles
+                    for particle in self.particles:
+                        ghostPos = particle[ghostIndex]
+                        trueDistance = util.manhattanDistance(ghostPos, pacmanPosition)
+                        if emissionModels[ghostIndex][trueDistance] >= 0:
+                            tempBeliefs[ghostIndex][ghostPos] += emissionModels[ghostIndex][trueDistance]
+                        else:
+                            assert(False)
+                    #if the particle weights are all 0, we reinitialize the ghost position and calculate weights again
+                    if(tempBeliefs[ghostIndex].totalCount() == 0):
+                        for ppos in range(self.numParticles):
+                            part = list(self.particles[x])
+                            for gidx in range(self.numGhosts):
+                                particle[gidx] = random.choice(self.legalPositions)
+                                self.particles[gidx] = tuple(particle)
                     else:
-                        assert(False)
-                particleWeights.normalize()
-                #if the particle weights are all 0, we initialize and calculate weights again
-                if(particleWeights.totalCount() == 0):
-                    self.initializeUniformly(gameState)
-                else:
-                    zeroweight = False
-            for x in range(len(self.particles)):
-                self.particles[x] = util.sample(particleWeights)
+                        break
+            tempBeliefs[ghostIndex].normalize()
+
+        for x in range(self.numParticles):
+            particle = list(self.particles[x])
+            for gidx in range(self.numGhosts):
+                if(noisyDistances[ghostIndex] == None):
+                    continue
+                particle[gidx] = util.sample(tempBeliefs[gidx])
+                self.particles[gidx] = tuple(particle)
 
 
         #wipe beliefs and reset based on updated particles
-        self.beliefs = util.Counter()
+        """self.beliefs = util.Counter()
         for particle in self.particles:
             self.beliefs[particle] += 1
-        self.beliefs.normalize()
+        self.beliefs.normalize()"""
 
 
 
