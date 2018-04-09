@@ -471,13 +471,20 @@ class JointParticleFilter:
         weight with each position) is incorrect and may produce errors.
         """
         "*** YOUR CODE HERE ***"
-        rawtuples = list(itertools.product(self.legalPositions, self.legalPositions))
+        argumentTup = ()
+        #generate random possible state locations for all ghosts
+        for g in range(0, self.numGhosts):
+            argumentTup += (self.legalPositions,)
+        rawtuples = list(itertools.product(*argumentTup))
         random.shuffle(rawtuples)
 
+        #init particles to the random locations uniformly
         for x in range(self.numParticles):
             self.particles.append(rawtuples[x%len(rawtuples)])
 
         #print(str(self.particles))
+        #print(str("numghosts: " + str(self.numGhosts) + "\n"))
+
 
 
     def addGhostAgent(self, agent):
