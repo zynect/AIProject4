@@ -643,6 +643,11 @@ class JointParticleFilter:
             # now loop through and update each entry in newParticle...
 
             "*** YOUR CODE HERE ***"
+            #looping over each ghost pos in newParticle
+            for i in range(self.numGhosts):
+                newPosDist = getPositionDistributionForGhost(
+             setGhostPositions(gameState, newParticle), i, self.ghostAgents[i])
+                newParticle[i] = util.sample(newPosDist)
 
             "*** END YOUR CODE HERE ***"
             newParticles.append(tuple(newParticle))
