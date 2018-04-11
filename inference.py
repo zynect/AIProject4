@@ -537,8 +537,6 @@ class JointParticleFilter:
         "*** YOUR CODE HERE ***"
         tempBeliefs = util.Counter()
 
-        #for x in range(0,2):
-
         total_belief = 0
         for particle in self.particles:
             tempProb = 1.0
@@ -562,49 +560,6 @@ class JointParticleFilter:
             if noisyDistances[ghostIndex] == None:
                 for particleIndex in range(self.numParticles):
                     self.particles[particleIndex] = self.getParticleWithGhostInJail(self.particles[particleIndex], ghostIndex)
-
-        """for x in range(self.numParticles):
-            self.particles[x] = util.sample(tempBeliefs)"""
-        """tempBeliefs = []
-        for ghostIndex in range(self.numGhosts):
-            tempBeliefs.append(util.Counter())
-
-            if noisyDistances[ghostIndex] == None:
-                for position in self.legalPositions:
-                    tempBeliefs[ghostIndex][position] = 0
-                tempBeliefs[ghostIndex][self.getJailPosition(ghostIndex)] = 1
-                for particleIndex in range(len(self.particles)):
-                    self.particles[particleIndex] = self.getParticleWithGhostInJail(self.particles[particleIndex], ghostIndex)
-
-
-            #otherwise recalculate the particles
-            else:
-                for x in range(0,2):
-                    #calculate the weights for particles
-                    for particle in self.particles:
-                        ghostPos = particle[ghostIndex]
-                        trueDistance = util.manhattanDistance(ghostPos, pacmanPosition)
-                        if emissionModels[ghostIndex][trueDistance] >= 0:
-                            tempBeliefs[ghostIndex][ghostPos] += emissionModels[ghostIndex][trueDistance]
-                        else:
-                            assert(False)
-                    #if the particle weights are all 0, we reinitialize the ghost position and calculate weights again
-                    if(tempBeliefs[ghostIndex].totalCount() == 0):
-                        self.initializeParticles()
-                        for partind in range(self.numParticles):
-                            self.particles[partind] = self.getParticleWithGhostInJail(self.particles[partind], ghostIndex)
-
-                    else:
-                        break
-            tempBeliefs[ghostIndex].normalize()
-
-        for x in range(self.numParticles):
-            particle = list(self.particles[x])
-            for gidx in range(self.numGhosts):
-                if(noisyDistances[ghostIndex] == None):
-                    continue
-                particle[gidx] = util.sample(tempBeliefs[gidx])
-                self.particles[x] = tuple(particle)"""
 
 
     def getParticleWithGhostInJail(self, particle, ghostIndex):
