@@ -334,8 +334,10 @@ class ParticleFilter(InferenceModule):
                     self.initializeUniformly(gameState)
                 else:
                     zeroweight = False
+            particles = []
             for x in range(len(self.particles)):
-                self.particles[x] = util.sample(particleWeights)
+                particles.append(util.sample(particleWeights))
+            self.particles = particles
 
 
         #wipe beliefs and reset based on updated particles
@@ -533,47 +535,37 @@ class JointParticleFilter:
         emissionModels = [busters.getObservationDistribution(dist) for dist in noisyDistances]
 
         "*** YOUR CODE HERE ***"
-        """for ghostIndex in range(self.numGhosts):
-            if noisyDistances[ghostIndex] == None:
-                for particleIndex in range(len(self.particles)):
-                    self.particles[particleIndex] = self.getParticleWithGhostInJail(self.particles[particleIndex], ghostIndex)
         tempBeliefs = util.Counter()
-        for x in range(0,2):
-            for particle in self.particles:
-                tempProb = 1
-                for ghostIndex in range(self.numGhosts):
+
+        #for x in range(0,2):
+
+        total_belief = 0
+        for particle in self.particles:
+            tempProb = 1.0
+            for ghostIndex in range(self.numGhosts):
+                if noisyDistances[ghostIndex] != None:
                     trueDistance = util.manhattanDistance(particle[ghostIndex], pacmanPosition)
                     tempProb *= emissionModels[ghostIndex][trueDistance]
-                tempBeliefs[particle] = tempProb
+            tempBeliefs[particle] += tempProb
+            total_belief += tempProb
 
 
-            if tempBeliefs.totalCount() == 0:
-                self.initializeParticles()
-                for ghostIndex in range(self.numGhosts):
-                    for partind in range(self.numParticles):
-                        self.particles[partind] = self.getParticleWithGhostInJail(self.particles[partind], ghostIndex)
-            else:
-                break
+        if total_belief == 0: #tempBeliefs.totalCount()
+            self.initializeParticles()
+        else:
+            particles = []
+            for x in range(self.numParticles):
+                particles.append(util.sample(tempBeliefs))
+            self.particles = particles
 
-        tempBeliefs.normalize()
-        tempGhostBeliefs = []
         for ghostIndex in range(self.numGhosts):
-            tempGhostBeliefs.append(util.Counter())
-        for particle in self.particles:
-            for ghostIndex in range(self.numGhosts):
-                tempGhostBeliefs[ghostIndex][particle[ghostIndex]] += tempBeliefs[particle]
-
-        for x in range(self.numParticles):
-            particle = list(self.particles[x])
-            for gidx in range(self.numGhosts):
-                if(noisyDistances[ghostIndex] == None):
-                    continue
-                particle[gidx] = util.sample(tempGhostBeliefs[gidx])
-                self.particles[x] = tuple(particle)"""
+            if noisyDistances[ghostIndex] == None:
+                for particleIndex in range(self.numParticles):
+                    self.particles[particleIndex] = self.getParticleWithGhostInJail(self.particles[particleIndex], ghostIndex)
 
         """for x in range(self.numParticles):
             self.particles[x] = util.sample(tempBeliefs)"""
-        tempBeliefs = []
+        """tempBeliefs = []
         for ghostIndex in range(self.numGhosts):
             tempBeliefs.append(util.Counter())
 
@@ -612,7 +604,7 @@ class JointParticleFilter:
                 if(noisyDistances[ghostIndex] == None):
                     continue
                 particle[gidx] = util.sample(tempBeliefs[gidx])
-                self.particles[x] = tuple(particle)
+                self.particles[x] = tuple(particle)"""
 
 
     def getParticleWithGhostInJail(self, particle, ghostIndex):
